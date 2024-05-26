@@ -4,19 +4,24 @@ import random
 
 app=Flask(__name__)
 
+token=""
+
 def get_token():
-    token=[]
+    global token
+    token_list=[]
     for i in range(25):
         now=random.randint(0,35)
         if now<10:
-            token.append(chr(ord('0')+now))
+            token_list.append(chr(ord('0')+now))
         else:
-            token.append(chr(ord('a')+now-10))
-    token="".join(token)
+            token_list.append(chr(ord('a')+now-10))
+    token="".join(token_list)
     print(token)
-    return token
+    token_save=open("token.key","w")
+    token_save.write(token)
+    token_save.close()
 
-token=get_token()
+get_token()
 
 def start(ip):
     global users
@@ -61,7 +66,6 @@ def get_page(ip):
 #setting pages afterwards
 token_box=\
 '''
-type 1 to regenerate token
 <form>
   Token: <input type="text" name="Token"><br>
   <input type="submit" value="Submit">
@@ -71,18 +75,23 @@ type 1 to regenerate token
 setting_links=\
 '''
 <a href="/settings/users">users</a><br>
-<a href="/settings/messages">messages</a>
+<a href="/settings/messages">messages</a><br>
+<a href="/settings/reset">reset token</a>
 '''
 @app.route("/settings")
 def manage():
-    global token
     token_now=request.args.get("Token")
-    if token_now=="1":
-        token=get_token()
     if token_now!=token:
         return token_box+"invalid input"
     return setting_links
 
+@app.route("/settings/reset")
+def reset_token():
+    token_now=request.args.get("Token")
+    if token_now!=token:
+        return token_box+"invalid input"
+    get_token()
+    return "token resetted"
 
 users_box=\
 '''
@@ -94,10 +103,7 @@ users_box=\
 '''
 @app.route("/settings/users")
 def manage_users():
-    global token
     token_now=request.args.get("Token")
-    if token_now=="1":
-        token=get_token()
     if token_now!=token:
         return token_box+"invalid input"
     user_now=request.args.get("IP")
@@ -115,10 +121,8 @@ message_box=\
 '''
 @app.route("/settings/messages")
 def manage_messages():
-    global token,messages
+    global messages
     token_now=request.args.get("Token")
-    if token_now=="1":
-        token=get_token()
     if token_now!=token:
         return token_box+"invalid input"
     message=request.args.get("ID")
