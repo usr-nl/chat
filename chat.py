@@ -1,8 +1,8 @@
-# This version may have lots of issues. 
-
 from flask import Flask,request
 import pandas # may cause performance issues. 
 import random
+
+app=Flask(__name__)
 
 def get_token():
     token=[]
@@ -18,16 +18,6 @@ def get_token():
 
 token=get_token()
 
-app=Flask(__name__)
-
-users=pandas.DataFrame(columns=["name","status"])
-starter_box=\
-'''
-<form>
-  Choose a nichname: <input type="text" name="Name"><br>
-  <input type="submit" value="Submit">
-</form>
-'''
 def start(ip):
     global users
     name=request.args.get("Name")
@@ -40,9 +30,9 @@ def start(ip):
         return "Reload the page to start chatting"
 
 messages=pandas.DataFrame(columns=["sender","receiver","message"])
-def send(sender,receiver,message):
+def send(sender,receiver,content):
     global messages
-    messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"message":[message]},index=[None])],ignore_index=True)
+    messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"message":[content]},index=[None])],ignore_index=True)
 
 def get_choose():
     choose_receiver=""
@@ -54,80 +44,19 @@ def get_choose():
 def get_userlink(ip):
     return "<a href=/profile?IP=%s>%s</a>"%(ip,users.at[ip,"name"])
 
-def get_page(sender):
+def get_page(ip):
     page=""
-    msgs=messages[(messages.receiver=='')|(messages.receiver==sender)|(messages.sender==sender)].sort_index()
-    for msg in msgs.values:
-        sender_name,receiver_name,message=msg
-        sender_name=get_userlink(sender_name)
-        if receiver_name!='':
-            receiver_name=get_userlink(receiver_name)
-        if receiver_name!='':
-            page=sender_name+"(to %s)"%(receiver_name)+"<br>"+message+"<br>"+page
+    messages_filtered=messages[(messages.receiver=='')|(messages.receiver==ip)|(messages.sender==ip)].sort_index()
+    for message in messages_filtered.values:
+        sender,receiver,content=message
+        sender=get_userlink(sender)
+        if receiver!='':
+            receiver=get_userlink(receiver)
+        if receiver!='':
+            page=sender+"(to %s)"%(receiver)+"<br>"+content+"<br>"+page
         else:
-            page=sender_name+"<br>"+message+"<br>"+page
+            page=sender+"<br>"+content+"<br>"+page
     return page
-
-@app.route("/")
-def chat():
-    sender=request.remote_addr
-    if sender not in users.index:
-        return start(sender)
-    if users.at[sender,"status"]==False:
-        return "banned"
-    message=request.args.get("Message")
-    if message=='':
-        message=None
-    receiver=request.args.get("Receiver")
-    if receiver==None:
-        receiver=''
-    if message!=None:
-        send(sender,receiver,message)
-    choose_receiver=get_choose()
-    page=get_page(sender)
-    send_box=\
-'''
-<form>
-  Receiver: 
-  <select name="Receiver" id="Receiver">
-    <option value=>All</option>
-    %s
-  </select><br>
-  Message: 
-  <input type="text" name="Message"><br>
-  <input type="submit" value="Submit">
-</form>
-<a href="/profile">Profile</a>
-<a href="/settings">Manage</a><br>
-'''%(choose_receiver)
-    return send_box+page
-
-#profile pages afterwards
-name_box=\
-'''
-<form>
-  New Name: <input type="text" name="Name"><br>
-  <input type="submit" value="Submit">
-</form>
-'''
-@app.route("/profile")
-def profile():
-    f=""
-    name=request.args.get("Name")
-    if name!=None and name!="":
-        if name in users.name.values:
-            f="invalid input<br>"
-        ip=request.remote_addr
-        users.at[ip,"name"]=name
-    ip=request.args.get("IP")
-    if ip==None or ip=="":
-        ip=request.remote_addr
-    profile_info=\
-'''
-IP: %s<br>
-Name: %s
-'''%(ip,users.at[ip,"name"])
-    return name_box+f+profile_info
 
 #setting pages afterwards
 token_box=\
@@ -192,9 +121,81 @@ def manage_messages():
         token=get_token()
     if token_now!=token:
         return token_box+"invalid input"
-    message_now=request.args.get("ID")
-    if message_now!=None and message_now!="":
-        messages=messages.drop(int(message_now))
+    message=request.args.get("ID")
+    if message!=None and message!="":
+        messages=messages.drop(int(message))
     return message_box+str(messages).replace("\n","<br>\n")
+
+users=pandas.DataFrame(columns=["name","status"])
+starter_box=\
+'''
+<form>
+  Choose a nichname: <input type="text" name="Name"><br>
+  <input type="submit" value="Submit">
+</form>
+'''
+
+#profile pages afterwards
+name_box=\
+'''
+<form>
+  New Name: <input type="text" name="Name"><br>
+  <input type="submit" value="Submit">
+</form>
+'''
+@app.route("/profile")
+def profile():
+    f=""
+    name=request.args.get("Name")
+    if name!=None and name!="":
+        if name in users.name.values:
+            f="invalid input<br>"
+        ip=request.remote_addr
+        users.at[ip,"name"]=name
+    ip=request.args.get("IP")
+    if ip==None or ip=="":
+        ip=request.remote_addr
+    profile_info=\
+'''
+IP: %s<br>
+Name: %s
+'''%(ip,users.at[ip,"name"])
+    return name_box+f+profile_info
+
+#main pages
+@app.route("/")
+def chat():
+    sender=request.remote_addr
+    if sender not in users.index:
+        return start(sender)
+    if users.at[sender,"status"]==False:
+        return "banned"
+    content=request.args.get("Message")
+    if content=='':
+        content=None
+    receiver=request.args.get("Receiver")
+    if receiver==None:
+        receiver=''
+    if content!=None:
+        send(sender,receiver,content)
+    choose_receiver=get_choose()
+    page=get_page(sender)
+    send_box=\
+'''
+<form>
+  Receiver: 
+  <select name="Receiver" id="Receiver">
+    <option value=>All</option>
+    %s
+  </select><br>
+  Message: 
+  <input type="text" name="Message"><br>
+  <input type="submit" value="Submit">
+</form>
+<a href="/profile">Profile</a>
+<a href="/settings">Manage</a><br>
+'''%(choose_receiver)
+    return send_box+page
+
 
 app.run(host="0.0.0.0",port=80)
