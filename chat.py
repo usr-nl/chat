@@ -77,6 +77,12 @@ def manage_users():
         (users.at[user_now,"status"])^=True
     return users_box+get_users()
 
+def get_messages():
+    messagelist=""
+    for id in messages.index:
+        messagelist+=str(id)+" "+messages.at[id,"sender"]+" "+messages.at[id,"receiver"]+" "+messages.at[id,"message"]+" <br>"
+    return messagelist
+
 message_box=\
 '''
 <form>
@@ -94,7 +100,7 @@ def manage_messages():
     message=request.args.get("ID")
     if message!=None and message!="":
         messages=messages.drop(int(message))
-    return message_box+str(messages).replace("\n","<br>\n")
+    return message_box+get_messages()
 
 #profile pages afterwards
 name_box=\
