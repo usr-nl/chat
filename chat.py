@@ -4,6 +4,10 @@ import random
 
 app=Flask(__name__)
 
+messages=pandas.DataFrame(columns=["sender","receiver","message"])
+users=pandas.DataFrame(columns=["name","status"])
+
+#setting pages afterwards
 token=""
 
 def get_token():
@@ -23,47 +27,6 @@ def get_token():
 
 get_token()
 
-def start(ip):
-    global users
-    name=request.args.get("Name")
-    if name==None or name=='':
-        return starter_box
-    else:
-        if name in users.name.values:
-            return starter_box+"invalid input"
-        users=pandas.concat([users,pandas.DataFrame({"name":[name],"status":[True]},index=[ip])])
-        return "Reload the page to start chatting"
-
-messages=pandas.DataFrame(columns=["sender","receiver","message"])
-def send(sender,receiver,content):
-    global messages
-    messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"message":[content]},index=[None])],ignore_index=True)
-
-def get_choose():
-    choose_receiver=""
-    for receiver in users[users.status==True].index:
-        ip,name=receiver,users.at[receiver,"name"]
-        choose_receiver+='    <option value="%s">%s</option>\n'%(ip,name)
-    return choose_receiver
-
-def get_userlink(ip):
-    return "<a href=/profile?IP=%s>%s</a>"%(ip,users.at[ip,"name"])
-
-def get_page(ip):
-    page=""
-    messages_filtered=messages[(messages.receiver=='')|(messages.receiver==ip)|(messages.sender==ip)].sort_index()
-    for message in messages_filtered.values:
-        sender,receiver,content=message
-        sender=get_userlink(sender)
-        if receiver!='':
-            receiver=get_userlink(receiver)
-        if receiver!='':
-            page=sender+"(to %s)"%(receiver)+"<br>"+content+"<br>"+page
-        else:
-            page=sender+"<br>"+content+"<br>"+page
-    return page
-
-#setting pages afterwards
 token_box=\
 '''
 <form>
@@ -130,15 +93,6 @@ def manage_messages():
         messages=messages.drop(int(message))
     return message_box+str(messages).replace("\n","<br>\n")
 
-users=pandas.DataFrame(columns=["name","status"])
-starter_box=\
-'''
-<form>
-  Choose a nichname: <input type="text" name="Name"><br>
-  <input type="submit" value="Submit">
-</form>
-'''
-
 #profile pages afterwards
 name_box=\
 '''
@@ -167,6 +121,52 @@ Name: %s
     return name_box+f+profile_info
 
 #main pages
+starter_box=\
+'''
+<form>
+  Choose a nichname: <input type="text" name="Name"><br>
+  <input type="submit" value="Submit">
+</form>
+'''
+def start(ip):
+    global users
+    name=request.args.get("Name")
+    if name==None or name=='':
+        return starter_box
+    else:
+        if name in users.name.values:
+            return starter_box+"invalid input"
+        users=pandas.concat([users,pandas.DataFrame({"name":[name],"status":[True]},index=[ip])])
+        return "Reload the page to start chatting"
+
+def send(sender,receiver,content):
+    global messages
+    messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"message":[content]},index=[None])],ignore_index=True)
+
+def get_choose():
+    choose_receiver=""
+    for receiver in users[users.status==True].index:
+        ip,name=receiver,users.at[receiver,"name"]
+        choose_receiver+='    <option value="%s">%s</option>\n'%(ip,name)
+    return choose_receiver
+
+def get_userlink(ip):
+    return "<a href=/profile?IP=%s>%s</a>"%(ip,users.at[ip,"name"])
+
+def get_page(ip):
+    page=""
+    messages_filtered=messages[(messages.receiver=='')|(messages.receiver==ip)|(messages.sender==ip)].sort_index()
+    for message in messages_filtered.values:
+        sender,receiver,content=message
+        sender=get_userlink(sender)
+        if receiver!='':
+            receiver=get_userlink(receiver)
+        if receiver!='':
+            page=sender+"(to %s)"%(receiver)+"<br>"+content+"<br>"+page
+        else:
+            page=sender+"<br>"+content+"<br>"+page
+    return page
+
 @app.route("/")
 def chat():
     sender=request.remote_addr
@@ -200,6 +200,5 @@ def chat():
 <a href="/settings">Manage</a><br>
 '''%(choose_receiver)
     return send_box+page
-
 
 app.run(host="0.0.0.0",port=80)
