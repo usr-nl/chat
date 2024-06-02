@@ -43,9 +43,6 @@ setting_links=\
 '''
 @app.route("/settings")
 def manage():
-    token_now=request.args.get("Token")
-    if token_now!=token:
-        return token_box+"invalid input"
     return setting_links
 
 @app.route("/settings/reset")
@@ -55,6 +52,12 @@ def reset_token():
         return token_box+"invalid input"
     get_token()
     return "token resetted"
+
+def get_users():
+    userlist=""
+    for ip in users.index:
+        userlist+=ip+" "+users.at[ip,"name"]+" "+str(users.at[ip,"status"])+" <br>"
+    return userlist
 
 users_box=\
 '''
@@ -72,7 +75,7 @@ def manage_users():
     user_now=request.args.get("IP")
     if user_now!=None and user_now!="":
         (users.at[user_now,"status"])^=True
-    return users_box+str(users).replace("\n","<br>\n")
+    return users_box+get_users()
 
 message_box=\
 '''
