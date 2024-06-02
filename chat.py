@@ -72,10 +72,14 @@ def manage_users():
     token_now=request.args.get("Token")
     if token_now!=token:
         return token_box+"invalid input"
+    f=""
     user_now=request.args.get("IP")
     if user_now!=None and user_now!="":
-        (users.at[user_now,"status"])^=True
-    return users_box+get_users()
+        if user_now in users.index:
+            (users.at[user_now,"status"])^=True
+        else:
+            f="not a valid user<br>"
+    return f+users_box+get_users()
 
 def get_messages():
     messagelist=""
@@ -93,14 +97,18 @@ message_box=\
 '''
 @app.route("/settings/messages")
 def manage_messages():
-    global messages
     token_now=request.args.get("Token")
     if token_now!=token:
         return token_box+"invalid input"
-    message=request.args.get("ID")
-    if message!=None and message!="":
-        messages=messages.drop(int(message))
-    return message_box+get_messages()
+    f=""
+    global messages
+    message_now=request.args.get("ID")
+    if message_now!=None and message_now!="":
+        if message_now.isdigit() and (int(message_now) in messages.index):
+            messages=messages.drop(int(message_now))
+        else:
+            f="not a valid message"
+    return f+message_box+get_messages()
 
 #profile pages afterwards
 name_box=\
