@@ -141,24 +141,6 @@ def profile():
     return name_box+f+profile_info
 
 #main pages
-# starter_box=\
-# '''
-# <form>
-#   Choose a nichname: <input type="text" name="Name"><br>
-#   <input type="submit" value="Submit">
-# </form>
-# '''
-# def start(ip):
-#     global users
-#     name=request.args.get("Name")
-#     if name==None or name=='':
-#         return starter_box
-#     else:
-#         if name in users.name.values:
-#             return starter_box+"invalid input"
-#         users=pandas.concat([users,pandas.DataFrame({"name":[name],"status":[True]},index=[ip])])
-#         return "Reload the page to start chatting"
-
 def send(sender,receiver,content):
     global messages
     messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"content":[content]},index=[None])],ignore_index=True)
@@ -185,18 +167,13 @@ def get_choose():
         choose_receiver+='    <option value="%s">%s</option>\n'%(ip,name)
     return send_box.replace("CHOOSE_RECEIVER",choose_receiver)
 
-# def get_userlink(ip):
-#     return "<a href=/profile?IP=%s>%s</a>"%(ip,users.at[ip,"name"])
-
 def get_page(ip):
     page=""
     messages_filtered=messages[(messages.receiver=='')|(messages.receiver==ip)|(messages.sender==ip)].sort_index()
     for message in messages_filtered.values:
         sender,receiver,content=message
-        # sender=get_userlink(sender)
         sender="<a href=/profile?IP=%s>%s</a>"%(sender,users.at[sender,"name"])
         if receiver!='':
-            # receiver=get_userlink(receiver)
             receiver="<a href=/profile?IP=%s>%s</a>"%(receiver,users.at[receiver,"name"])
         if receiver!='':
             page=sender+"(to %s)"%(receiver)+"<br>"+content+"<br>"+page
@@ -208,8 +185,6 @@ def get_page(ip):
 def chat():
     f=""
     ip=request.remote_addr
-    # if ip not in users.index:
-    #     return start(ip)
     if ip in users.index and users.at[ip,"status"]==False:
         return "banned"
     content=request.args.get("Message")
@@ -223,23 +198,8 @@ def chat():
             send(ip,receiver,content)
         else:
             f="Please set your username first<br>"
-    send_box=get_choose() # may down here
+    send_box=get_choose()
     page=get_page(ip)
-#     send_box=\
-# '''
-# <form>
-#   Receiver: 
-#   <select name="Receiver" id="Receiver">
-#     <option value=>All</option>
-#     %s
-#   </select><br>
-#   Message: 
-#   <input type="text" name="Message"><br>
-#   <input type="submit" value="Submit">
-# </form>
-# <a href="/profile">Profile</a>
-# <a href="/settings">Manage</a><br>
-# '''%(choose_receiver)
     return send_box+f+page
 
 app.run(host="0.0.0.0",port=80)
