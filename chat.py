@@ -4,7 +4,7 @@ import random
 
 app=Flask(__name__)
 
-messages=pandas.DataFrame(columns=["sender","receiver","message"])
+messages=pandas.DataFrame(columns=["sender","receiver","content"])
 users=pandas.DataFrame(columns=["name","status"])
 
 #setting pages afterwards
@@ -84,7 +84,7 @@ def manage_users():
 def get_messages():
     messagelist=""
     for id in messages.index:
-        messagelist+=str(id)+" "+messages.at[id,"sender"]+" "+messages.at[id,"receiver"]+" "+messages.at[id,"message"]+" <br>"
+        messagelist+=str(id)+" "+messages.at[id,"sender"]+" "+messages.at[id,"receiver"]+" "+messages.at[id,"content"]+" <br>"
     return messagelist
 
 message_box=\
@@ -158,7 +158,7 @@ def start(ip):
 
 def send(sender,receiver,content):
     global messages
-    messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"message":[content]},index=[None])],ignore_index=True)
+    messages=pandas.concat([messages,pandas.DataFrame({"sender":[sender],"receiver":[receiver],"content":[content]},index=[None])],ignore_index=True)
 
 def get_choose():
     choose_receiver=""
