@@ -130,11 +130,17 @@ def profile():
     ip=request.args.get("IP")
     if ip==None or ip=="":
         ip=request.remote_addr
-    profile_info=\
-'''
-IP: %s<br>
-Name: %s
-'''%(ip,users.at[ip,"name"])
+#     profile_info=\
+# '''
+# IP: %s<br>
+# Name: %s
+# '''%(ip,users.at[ip,"name"])
+    profile_info=""
+    profile_info+="IP: %s<br>"%(ip)
+    if ip in users.index:
+        profile_info+="Name: %s"%(users.at[ip,"name"])
+    else:
+        profile_info+="Choose a nichname"
     return name_box+f+profile_info
 
 #main pages
