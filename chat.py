@@ -123,12 +123,13 @@ def profile():
     f=""
     name=request.args.get("Name")
     if name!=None and name!="":
-        if name in users.name.values:
+        if name in users.name.values or not (name.isalnum() and name.isascii()):
             f="invalid input<br>"
-        ip=request.remote_addr
-        if ip not in users.index:
-            users.at[ip,"status"]=True
-        users.at[ip,"name"]=name
+        else:
+            ip=request.remote_addr
+            if ip not in users.index:
+                users.at[ip,"status"]=True
+            users.at[ip,"name"]=name
     ip=request.args.get("IP")
     if ip==None or ip=="":
         ip=request.remote_addr
@@ -195,7 +196,12 @@ def chat():
         receiver=''
     if content!=None:
         if ip in users.index:
-            send(ip,receiver,content)
+            if "<" in content or ">" in content:
+                f="invalid message<br>"
+            elif receiver not in users.index and receiver!='':
+                f="invalid receiver<br>"
+            else:
+                send(ip,receiver,content)
         else:
             f="Please set your username first<br>"
     send_box=get_choose()
