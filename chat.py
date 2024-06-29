@@ -182,8 +182,14 @@ def get_page(ip):
             page=sender+"<br>"+content+"<br>"+page
     return page
 
+pre_ip="IP"
+pre_receiver="RECEIVER"
+pre_content="CONTENT"
 @app.route("/")
 def chat():
+    global pre_ip
+    global pre_receiver
+    global pre_content
     f=""
     ip=request.remote_addr
     if ip in users.index and users.at[ip,"status"]==False:
@@ -200,8 +206,11 @@ def chat():
                 f="invalid message<br>"
             elif receiver not in users.index and receiver!='':
                 f="invalid receiver<br>"
-            else:
+            elif ip!=pre_ip or receiver!=pre_receiver or content!=pre_content:
                 send(ip,receiver,content)
+                pre_ip=ip
+                pre_receiver=receiver
+                pre_content=content
         else:
             f="Please set your username first<br>"
     send_box=get_choose()
