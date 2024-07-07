@@ -1,6 +1,7 @@
 from flask import Flask,request
 import pandas # may cause performance issues. 
 import random
+import html
 
 app=Flask(__name__)
 
@@ -201,10 +202,9 @@ def chat():
     if receiver==None:
         receiver=''
     if content!=None:
+        content=html.escape(content)
         if ip in users.index:
-            if "<" in content or ">" in content:
-                f="invalid message<br>"
-            elif receiver not in users.index and receiver!='':
+            if receiver not in users.index and receiver!='':
                 f="invalid receiver<br>"
             elif ip!=pre_ip or receiver!=pre_receiver or content!=pre_content:
                 send(ip,receiver,content)
