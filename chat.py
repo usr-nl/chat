@@ -142,6 +142,17 @@ def profile():
         profile_info+="Choose a nichname"
     return name_box+f+profile_info
 
+@app.route("/stat")
+def stat():
+    messages_stat=messages[messages.receiver=='']
+    messages_group=messages_stat.groupby("sender",as_index=False).count()
+    messages_sort=messages_group.sort_values("content",ascending=False)
+    result=""
+    for message in messages_sort.values:
+        sender,receiver,count=message
+        result+=users.at[sender,"name"]+' '+str(count)+"<br>"
+    return result
+
 #main pages
 def send(sender,receiver,content):
     global messages
@@ -160,7 +171,8 @@ send_box=\
   <input type="submit" value="Submit">
 </form>
 <a href="/profile">Profile</a>
-<a href="/settings">Manage</a><br>
+<a href="/settings">Manage</a>
+<a href="/stat">Stat</a><br>
 '''
 def get_choose():
     choose_receiver=""
